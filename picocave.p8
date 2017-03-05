@@ -27,7 +27,7 @@ function wall(i,kind,y)
   end
   
   local rockb={}
-  for j=y+height+1,15 do
+  for j=y+height+1,16 do
     add(
       rockb,
       {y=j,s=rand(solid)}
@@ -40,6 +40,7 @@ function wall(i,kind,y)
     i=i,
     s=s,
     y=y,
+    h=height,
     rockt=rockt,
     rockb=rockb,
     kind=kind
@@ -98,6 +99,16 @@ next_kinds={
   [top]={top_mid,bot_mid},
   [bottom]={bot_mid,top_mid}
 }
+next_kind_down={
+  [middle]=mid_bot,
+  [top]=top_mid,
+  [bottom]=top_mid
+}
+next_kind_up={
+  [middle]=mid_top,
+  [top]=bot_mid,
+  [bottom]=bot_mid
+}
 
 --sprites for solid wall
 solid={32,33,34}
@@ -117,17 +128,17 @@ function add_next_wall()
   local next_kind
   
   if (
-    prev.y <= min_y and
-    prev_right == top
+    prev.y <= min_y
   ) then
     --at top so go down
-    next_kind=top_mid
+    next_kind=
+      next_kind_down[prev_right]
   elseif (
-    prev.y >= max_y and
-    prev_right == bottom
+    prev.y >= max_y
   ) then
     --at bottom so go up
-    next_kind=bot_mid
+    next_kind=
+      next_kind_up[prev_right]
   else
     --choose random direction
     next_kind=
@@ -155,6 +166,10 @@ function add_next_wall()
   add(top_wall,nxt)
 end
 
+function remove_first_wall()
+  del(top_wall,top_wall[1])
+end
+
 function _init()
   --fill top_wall array
   for i=0,15 do
@@ -166,8 +181,26 @@ function _update()
   frame+=1
   
   --add new wall every 8 frames
+  --and remove first wall
   if frame%8==0 then
     add_next_wall()
+    remove_first_wall()
+  end
+  
+  --narrow cave every 64 frames
+  if (
+    frame%64==0 and height>1
+  ) then
+    height-=1/8
+
+    --adjust min_y and max_y
+    --as we narrow
+    if (
+      16-(height+min_y+max_y)>0
+    ) then
+      min_y+=1
+      max_y+=1
+    end
   end
 end
 
@@ -182,19 +215,21 @@ function _draw()
     local w=top_wall[i+1]
     local x=w.i-frame/8
 
-    --draw rock above wall
+    --draw rock above top wall
     for k,r in pairs(w.rockt) do
       spr8(r.s,x,r.y)
     end
 
-    --draw rock below wall
+    --draw rock below bottom wall
     for k,r in pairs(w.rockb) do
       spr8(r.s,x,r.y)
     end
     
-    --draw wall
+    --draw top wall
     spr8(w.s,x,w.y)
-    spr8(w.s+16,x,height+w.y)
+    
+    --draw bottom wall
+    spr8(w.s+16,x,w.h+w.y)
   end
 end
 __gfx__
