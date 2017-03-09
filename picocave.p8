@@ -8,14 +8,17 @@ max_y=4
 frame=0
 
 snake={
-  segments={},
   head=5,
+  tail={5,5,5},
   s=35,
   vel=0,
   grav=1/64
 }
 
 function snake:update(up)
+  add(snake.tail,snake.head)
+  del(snake.tail,snake.tail[1])
+
   if up then
     snake.vel-=snake.grav
   else
@@ -24,8 +27,7 @@ function snake:update(up)
   
   snake.head+=snake.vel
 
-  --update snake body
-  --and sprites based on
+  --set sprites based on
   --current velocity
 end
 
@@ -262,6 +264,10 @@ function _draw()
 
   --draw snake
   spr8(snake.s,3,snake.head)
+  
+  for k,t in pairs(snake.tail) do
+    spr8(snake.s+16,k-1,t)
+  end
 end
 __gfx__
 00000000444444454444445444445444444444445444444444444544454444544444444544444454444544445444454444544444444444444444444445444444
